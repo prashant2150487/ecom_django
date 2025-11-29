@@ -1,6 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
+from .managers import UserManager
+
+
 
 # Create your models here.
 
@@ -21,13 +24,12 @@ class User(AbstractUser):
         ('prefer_not_to_say', 'Prefer not to say'),
     )
     
-    username= None
     email=models.EmailField(unique=True, db_index=True)
     phone_regex = RegexValidator(
         regex=r'^\+?1?\d{9,15}$',
         message='phone number must be entered in the format: "+999999999". Up to 15 digits allowed.'
     )
-    phoneNumber=models.CharField(validators=[phone_regex])
+    phone_number = models.CharField(max_length=17, validators=[phone_regex], blank=True, null=True)
     date_of_birth=models.DateField(blank=True, null=True)
     gender=models.CharField(max_length=20, choices=GENDER_CHOICES, blank=True, null=True)
     role=models.CharField(max_length=20, choices=USER_ROLES, default='customer')
@@ -40,7 +42,9 @@ class User(AbstractUser):
     updated_at=models.DateTimeField(auto_now=True)
     
     USERNAME_FIELD='email'
-    REQUIRED_FIELDS=['first_name', 'last_name']
+    REQUIRED_FIELDS=[]
+    
+    objects=UserManager()
     
     class Meta:
         db_table='users'
