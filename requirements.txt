@@ -1,0 +1,37 @@
+Django==5.2.8
+djangorestframework
+djangorestframework-simplejwt
+mysqlclient
+django-cors-headers
+Pillow
+python-decouple
+django-filter
+celery
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# python manage.py createsuperuser
+# Username : psachan04
+# Email address: psachan04@hotmail.com
+# Password: test@123
+# Password (again): test@123
+# source venv/bin/activate
+
+
+
+# Start development server
+# python manage.py runserver
+
+
+
