@@ -22,8 +22,8 @@ celery
 
 
 # python manage.py createsuperuser
-# Username : psachan04
-# Email address: psachan04@hotmail.com
+# Username :
+# Email address: admin@example.com
 # Password: test@123
 # Password (again): test@123
 # source venv/bin/activate
@@ -32,6 +32,9 @@ celery
 
 # Start development server
 # python manage.py runserver
+python manage.py makemigrations
+python manage.py migrate
+
 
 
 
