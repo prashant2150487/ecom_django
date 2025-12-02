@@ -21,6 +21,7 @@ def register_user(request):
 
     if serializer.is_valid():
         user=serializer.save()
+        print(user,"uuuuuu",request.data)
         email_sent=send_verification_email(user,request)
         if email_sent:
             return Response({"message":"User register successfully. Please check your email to verify your account",
