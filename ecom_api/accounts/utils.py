@@ -60,8 +60,8 @@ def send_verification_email(user, request):
         return True
     except Exception as e:
         print(f"Error sending verification email: {e}")
-        import traceback
-        traceback.print_exc()
+        # import traceback
+        # traceback.print_exc()
         return False
     
 def send_wellcome_email(user):
