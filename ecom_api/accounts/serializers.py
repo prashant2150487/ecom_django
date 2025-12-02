@@ -44,7 +44,30 @@ class AddressSerializer(serializers.ModelSerializer):
     class Meta:
         model=Address
         fields='__all__'
-        read_only_fields=('user','created_at','updated_at')        
+        read_only_fields=('user','created_at','updated_at')   
+
+class EmailVerificationSerializer(serializers.Serializer):
+    token=serializers.UUIDField()
+    def validate(self,value):
+        try:
+            token=EmailVerificationToken.objects.get(token=value)
+            if not token.is_valid():
+                raise serializers.ValidationError("Verification token has expired or already been used.")    
+            return value
+        except EmailVerificationToken.DoesNotExist:
+            raise serializers.ValidationError("Invalid verification token.")
+
+
+class ResendVerificationSerializer(serializers.Serializer):
+    email=serializers.EmailField()
+    def validate_email(self,value):
+        try:
+            user=User.object.get(email=value)
+            if user.is_email_verified:
+                raise serializers.ValidationError("Email already verified.")
+            return value
+        except User.DoesNotExist:
+            raise serializers.ValidationError("No user found with this email address.")    
 
     
         

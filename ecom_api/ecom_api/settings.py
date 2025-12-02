@@ -194,7 +194,9 @@ SIMPLE_JWT = {
 }
 
 # Email Configuration
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# For development: Use console backend (prints emails to terminal)
+# For production: Use SMTP backend
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = os.getenv('SMTP_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('SMTP_PORT', 587))
 EMAIL_USE_TLS = True

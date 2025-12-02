@@ -160,11 +160,13 @@ class EmailVerificationToken(models.Model):
         db_table = 'email_verifications_tokens'
         verbose_name = 'Email Verification Token'
         verbose_name_plural = 'Email Verification Tokens'
-    
-    def is_valid(self,*args,**kwargs):
+
+
+    def save(self,*args,**kwargs):
         if not self.expires_at:
             self.expires_at = timezone.now() + timedelta(hours=24)
-        super().save(*args,**kwargs)
+        super().save(*args,**kwargs)    
+    
     def is_valid(self):
         return not self.is_used and timezone.now() <= self.expires_at 
     def __str__(self):
