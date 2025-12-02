@@ -5,92 +5,335 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verify Your Email</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
-            color: #333;
+            color: #1a1a1a;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        
+        .email-wrapper {
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
         }
+        
         .container {
-            background-color: #f9f9f9;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
+        
         .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 50px 40px;
             text-align: center;
-            margin-bottom: 30px;
+            position: relative;
         }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+        }
+        
         .header h1 {
-            color: #4CAF50;
+            color: #ffffff;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 16px;
             margin: 0;
         }
-        .content {
-            background-color: white;
-            padding: 20px;
-            border-radius: 5px;
+        
+        .icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+            display: block;
+            animation: bounce 2s infinite;
         }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .content {
+            padding: 50px 40px;
+        }
+        
+        .greeting {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 20px;
+        }
+        
+        .message {
+            font-size: 16px;
+            color: #4a5568;
+            margin-bottom: 20px;
+            line-height: 1.7;
+        }
+        
+        .button-container {
+            text-align: center;
+            margin: 40px 0;
+        }
+        
         .button {
             display: inline-block;
-            padding: 12px 30px;
-            background-color: #4CAF50;
+            padding: 16px 48px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             text-decoration: none;
-            border-radius: 5px;
-            margin: 20px 0;
-            font-weight: bold;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 16px;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
+        
+        .button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .button:hover::before {
+            left: 100%;
+        }
+        
         .button:hover {
-            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.5);
         }
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 12px;
-            color: #666;
+        
+        .link-container {
+            background: #f7fafc;
+            border: 2px dashed #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 30px 0;
         }
+        
+        .link-label {
+            font-size: 14px;
+            color: #718096;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        
+        .link-text {
+            word-break: break-all;
+            color: #667eea;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+        
         .warning {
-            background-color: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 10px;
-            margin: 20px 0;
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 30px 0;
+            display: flex;
+            align-items: flex-start;
+            box-shadow: 0 4px 15px rgba(253, 203, 110, 0.3);
+        }
+        
+        .warning-icon {
+            font-size: 24px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .warning-content strong {
+            display: block;
+            color: #2d3748;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .warning-content p {
+            color: #4a5568;
+            font-size: 14px;
+            margin: 0;
+        }
+        
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+            margin: 30px 0;
+        }
+        
+        .info-box {
+            background: #edf2f7;
+            border-left: 4px solid #667eea;
+            padding: 15px 20px;
+            border-radius: 6px;
+            margin-top: 30px;
+        }
+        
+        .info-box p {
+            color: #4a5568;
+            font-size: 14px;
+            margin: 0;
+        }
+        
+        .footer {
+            background: #f7fafc;
+            padding: 30px 40px;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .footer-logo {
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        
+        .footer p {
+            color: #718096;
+            font-size: 13px;
+            margin: 8px 0;
+        }
+        
+        .social-links {
+            margin: 20px 0 15px 0;
+        }
+        
+        .social-links a {
+            display: inline-block;
+            width: 36px;
+            height: 36px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 50%;
+            line-height: 36px;
+            margin: 0 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .social-links a:hover {
+            background: #764ba2;
+            transform: scale(1.1);
+        }
+        
+        @media (max-width: 600px) {
+            body {
+                padding: 20px 10px;
+            }
+            
+            .header {
+                padding: 40px 25px;
+            }
+            
+            .header h1 {
+                font-size: 26px;
+            }
+            
+            .content {
+                padding: 35px 25px;
+            }
+            
+            .button {
+                padding: 14px 36px;
+                font-size: 15px;
+            }
+            
+            .footer {
+                padding: 25px 25px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🎉 Welcome to Our Store!</h1>
-        </div>
-        
-        <div class="content">
-            <h2>Hi {{ user.first_name|default:user.email }}!</h2>
-            
-            <p>Thank you for registering with us. We're excited to have you on board!</p>
-            
-            <p>To complete your registration and start shopping, please verify your email address by clicking the button below:</p>
-            
-            <div style="text-align: center;">
-                <a href="{{ verification_url }}" class="button">Verify Email Address</a>
+    <div class="email-wrapper">
+        <div class="container">
+            <div class="header">
+                <span class="icon">🎉</span>
+                <h1>Welcome Aboard!</h1>
+                <p>Let's get you started on your journey</p>
             </div>
             
-            <p>Or copy and paste this link into your browser:</p>
-            <p style="word-break: break-all; background-color: #f5f5f5; padding: 10px; border-radius: 3px;">
-                {{ verification_url }}
-            </p>
-            
-            <div class="warning">
-                <strong>⚠️ Important:</strong> This verification link will expire in {{ expiry_hours }} hours.
+            <div class="content">
+                <h2 class="greeting">Hi {{ user.first_name|default:user.email }}! 👋</h2>
+                
+                <p class="message">
+                    Thank you for joining our community! We're thrilled to have you here and can't wait for you to explore everything we have to offer.
+                </p>
+                
+                <p class="message">
+                    To unlock your account and start your shopping experience, please verify your email address by clicking the button below:
+                </p>
+                
+                <div class="button-container">
+                    <a href="{{ verification_url }}" class="button">✓ Verify My Email</a>
+                </div>
+                
+                <div class="link-container">
+                    <div class="link-label">Or copy and paste this link:</div>
+                    <div class="link-text">{{ verification_url }}</div>
+                </div>
+                
+                <div class="warning">
+                    <span class="warning-icon">⏰</span>
+                    <div class="warning-content">
+                        <strong>Time-Sensitive Action Required</strong>
+                        <p>This verification link will expire in {{ expiry_hours }} hours for security purposes.</p>
+                    </div>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="info-box">
+                    <p><strong>🔒 Security Note:</strong> If you didn't create an account with us, you can safely ignore this email. Your information is secure.</p>
+                </div>
             </div>
             
-            <p>If you didn't create an account with us, please ignore this email.</p>
-        </div>
-        
-        <div class="footer">
-            <p>© 2025 E-commerce Platform. All rights reserved.</p>
-            <p>This is an automated email, please do not reply.</p>
+            <div class="footer">
+                <div class="footer-logo">🛍️</div>
+                
+                <div class="social-links">
+                    <a href="#" title="Facebook">f</a>
+                    <a href="#" title="Twitter">𝕏</a>
+                    <a href="#" title="Instagram">📷</a>
+                </div>
+                
+                <p style="font-weight: 600; color: #4a5568;">E-commerce Platform</p>
+                <p>© 2025 All rights reserved.</p>
+                <p style="margin-top: 15px;">This is an automated message, please do not reply to this email.</p>
+                <p>Need help? Visit our <a href="#" style="color: #667eea; text-decoration: none;">Help Center</a></p>
+            </div>
         </div>
     </div>
 </body>
