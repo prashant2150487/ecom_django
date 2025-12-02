@@ -67,7 +67,7 @@ ROOT_URLCONF = 'ecom_api.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [ BASE_DIR / 'accounts/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -192,3 +192,16 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
+
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.getenv('SMTP_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('SMTP_PORT', 587))
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('SMTP_USER')
+EMAIL_HOST_PASSWORD = os.getenv('SMTP_PASS')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'swepra04@gmail.com')
+EMAIL_TIMEOUT = 10
+
+# Frontend URL for email verification links
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')

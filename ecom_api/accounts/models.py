@@ -151,19 +151,24 @@ class Address(models.Model):
 
 class EmailVerificationToken(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='email_verification')
-    token = models.CharField(default=uuid.uuid4, max_length=255)
+    token = models.UUIDField(default=uuid.uuid4,unique=True,editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    expires_at = models.DateTimeField()
     is_used=models.BooleanField(default=False)
     
     class Meta:
-        db_table = 'email_verifications+tokens'
-        verbose_name = 'Email Verification'
-        verbose_name_plural = 'Email Verifications'
+        db_table = 'email_verifications_tokens'
+        verbose_name = 'Email Verification Token'
+        verbose_name_plural = 'Email Verification Tokens'
     
+    def is_valid(self,*args,**kwargs):
+        if not self.expires_at:
+            self.expires_at = timezone.now() + timedelta(hours=24)
+        super().save(*args,**kwargs)
     def is_valid(self):
-        return not self.is_used and timezone.now() <= self.expires_at
+        return not self.is_used and timezone.now() <= self.expires_at 
+    def __str__(self):
+        return f"{self.user.email}-{self.token}"       
 
 
 class PasswordResetToken(models.Model):
