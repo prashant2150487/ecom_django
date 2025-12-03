@@ -1,12 +1,21 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from .models import User
-from .serializers import UserRegisterSerializer,UserLoginSerializer , EmailVerificationSerializer
+from .models import User, EmailVerificationToken
+from .serializers import (
+    UserRegisterSerializer,
+    UserLoginSerializer,
+    EmailVerificationSerializer,
+    UserSerializer,
+    UserProfileSerializer,
+    ResendVerificationSerializer,
+)
 from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import permission_classes, authentication_classes
-from .utils import send_verification_email
+from .utils import send_verification_email, send_wellcome_email
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 
@@ -21,7 +30,6 @@ def register_user(request):
 
     if serializer.is_valid():
         user=serializer.save()
-        print(user,"uuuuuu",request.data)
         email_sent=send_verification_email(user,request)
         if email_sent:
             return Response({"message":"User register successfully. Please check your email to verify your account",
