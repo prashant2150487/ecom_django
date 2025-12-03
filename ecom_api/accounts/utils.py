@@ -34,6 +34,7 @@ def send_verification_email(user, request):
     try:
         # Generate verification token
         token = generate_verification_token(user)
+        print(token,"token")
         
         # Build verification URL
         verification_url = f"{settings.FRONTEND_URL}/verify-email?token={token.token}"
@@ -70,8 +71,8 @@ def send_wellcome_email(user):
             'user':user
         }
         html_message=render_to_string('accounts/welcome_email.html',context)
-        plain_message=render_to_string(html_message)
-        send_email(
+        plain_message=strip_tags(html_message)
+        send_mail(
             subject='Wellcome to E-commerce Platefrom',
             message=plain_message,
             from_email=settings.DEFAULT_FROM_EMAIL,

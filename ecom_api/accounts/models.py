@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from .managers import UserManager
 import uuid
+from django.utils import timezone
 
 
 # Phone number validator - reusable across models

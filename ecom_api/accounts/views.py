@@ -1,11 +1,11 @@
 from django.shortcuts import render
 from rest_framework.response import Response
 from .models import User
-from .serializers import UserRegisterSerializer,UserLoginSerializer
+from .serializers import UserRegisterSerializer,UserLoginSerializer , EmailVerificationSerializer
 from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.permissions import AllowAny
-from rest_framework.decorators import permission_classes
+from rest_framework.decorators import permission_classes, authentication_classes
 from .utils import send_verification_email
 
 
@@ -62,16 +62,19 @@ def get_user_profile(request):
 
 
 @api_view(['POST'])
+@authentication_classes([])
+@permission_classes([AllowAny])
 def verify_email(request):
     serializer=EmailVerificationSerializer(data=request.data)
     if serializer.is_valid():
         token=serializer.validated_data['token']
         try:
-            token=EmailVerificationToken.objects.get(token=token_value)
+            token=EmailVerificationToken.objects.get(token=token)
+            print(token,"token")
             user=token.user
 
             # Mark token as used    
-            token_is_user=True
+            token.is_used=True
             token.save()
 
             # Mark user email as verified

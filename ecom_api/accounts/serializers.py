@@ -1,6 +1,8 @@
 from rest_framework import serializers
-from .models import User , UserProfile, Address
+from .models import User , UserProfile, Address, EmailVerificationToken
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth import authenticate
+
 class UserRegisterSerializer(serializers.ModelSerializer):
     password=serializers.CharField(write_only=True, validators=[validate_password])
     password_confirm=serializers.CharField(write_only=True)
@@ -48,7 +50,7 @@ class AddressSerializer(serializers.ModelSerializer):
 
 class EmailVerificationSerializer(serializers.Serializer):
     token=serializers.UUIDField()
-    def validate(self,value):
+    def validate_token(self,value):
         try:
             token=EmailVerificationToken.objects.get(token=value)
             if not token.is_valid():
@@ -62,7 +64,7 @@ class ResendVerificationSerializer(serializers.Serializer):
     email=serializers.EmailField()
     def validate_email(self,value):
         try:
-            user=User.object.get(email=value)
+            user=User.objects.get(email=value)
             if user.is_email_verified:
                 raise serializers.ValidationError("Email already verified.")
             return value
