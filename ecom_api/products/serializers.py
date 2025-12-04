@@ -32,21 +32,20 @@ class CategorySerializers(serializers.ModelSerializer):
             'product_count'
 
         ]
-        def get_children(self,obj):
-            #  """Get active child categories"""
-            children=obj.get_active_children()
-            return CategorySerializers(children,many=True).data
-        
-        
-        def get_product_count(self,obj):
-            """Prevent circular parent relationships"""
-            return obj.get_products_count()
-        
-        def validate_parent(self,value):
-            """Prevent circular parent relationships"""
-            if value and value.parent and value.parent.id==self.instance.id:
-                raise serializers.ValidationError("Can not set a child category as parent.")
-            return value
+    def get_children(self, obj):
+        """Get active child categories"""
+        children = obj.get_active_children()
+        return CategorySerializers(children, many=True).data
+
+    def get_product_count(self, obj):
+        return obj.get_products_count()
+
+    def validate_parent(self, value):
+        """Prevent circular parent relationships"""
+        # when creating, self.instance may be None
+        if value and getattr(self, 'instance', None) and value.parent and value.parent.id == self.instance.id:
+            raise serializers.ValidationError("Can not set a child category as parent.")
+        return value
             
             
          

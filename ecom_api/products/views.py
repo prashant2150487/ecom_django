@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from rest_framework import status, filters , viewsets
+from rest_framework import status, filters, viewsets
 from rest_framework.permissions import AllowAny
 from .models import Category
 from .serializers import CategorySerializers
@@ -9,20 +9,20 @@ from django.core.cache import cache
 
 
 
-class CategoryViewSet(viewsets.ModalViewSet):
-    queryset=Category.objects.filter(is_active=True)
-    serializer_class=CategorySerializers
-    permission_classes=[AllowAny]
-    lookup_field='slug'
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset = Category.objects.filter(is_active=True)
+    serializer_class = CategorySerializers
+    permission_classes = [AllowAny]
+    lookup_field = 'slug'
     
     def get_queryset(self):
         queryset=super().get_queryset()
-        parent= self.request.query_params.get('parent', None)
+        parent = self.request.query_params.get('parent', None)
         if parent is not None:
             if parent == 'null':
-                queryset=queryset.filters(parent__isnull=True)
+                queryset = queryset.filter(parent__isnull=True)
             else:
-                queryset=queryset.filter(parent__slug=parent)
+                queryset = queryset.filter(parent__slug=parent)
         return queryset.select_related('parent')
     
     @action(detail=False, methods=['get'])

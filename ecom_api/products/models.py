@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.text import slugify
 from django.core.validators import MinValueValidator
 import uuid
+from django.utils import timezone
 
 class Category(models.Model):
     name = models.CharField(max_length=255, unique=True)

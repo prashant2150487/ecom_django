@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     'django_celery_results',
     # Local apps
     'accounts.apps.AccountsConfig',
+    'products.apps.ProductsConfig',
+    'vendors.apps.VendorsConfig',
     
 ]
 
