@@ -114,6 +114,20 @@ class UserAdmin(BaseUserAdmin):
 # ============================
 # ✅ EMAIL VERIFICATION TOKEN
 # ============================
+@admin.register(EmailVerificationToken)
+class EmailVerificationTokenAdmin(admin.ModelAdmin):
+    list_display =(
+        'user',
+        'token',
+        'is_used',
+        'expires_at',
+        'created_at'
+    )
+    list_filter = ('is_used',)
+    
+    
+    
+    
 
 # @admin.register(EmailVerificationToken)
 # class EmailVerificationTokenAdmin(admin.ModelAdmin):
