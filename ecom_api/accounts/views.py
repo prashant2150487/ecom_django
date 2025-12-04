@@ -61,6 +61,7 @@ def login_user(request):
 
 
         return Response({"error":"Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)     
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 def get_user_profile(request):
