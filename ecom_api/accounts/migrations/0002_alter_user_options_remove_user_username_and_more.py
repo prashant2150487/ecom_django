@@ -15,10 +15,6 @@ class Migration(migrations.Migration):
             name='user',
             options={'ordering': ['-created_at'], 'verbose_name': 'User', 'verbose_name_plural': 'Users'},
         ),
-        migrations.RemoveField(
-            model_name='user',
-            name='username',
-        ),
         migrations.AlterField(
             model_name='user',
             name='phone_number',
