@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_filters',
     'storages',
+    'mptt',
     'django_celery_beat',
     'django_celery_results',
     # Local apps
