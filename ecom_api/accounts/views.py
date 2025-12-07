@@ -44,24 +44,35 @@ def register_user(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_user(request):
-    serializer=UserLoginSerializer(data=request.data)
-    if serializer.is_valid():
-        email=serializer.validated_data['email']
-        password=serializer.validated_data['password']
-        user=authenticate(request, email=email, password=password)
-        if user:
-            refresh=RefreshToken.for_user(user)
-            return Response({
-                'user':UserSerializer(user).data,
-                'refresh':str(refresh),
-                'access':str(refresh.access_token)
-            },
-            status=status.HTTP_200_OK
-            )
+    serializer = UserLoginSerializer(data=request.data)
 
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({"error":"Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)     
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    email = serializer.validated_data['email']
+    password = serializer.validated_data['password']
+
+    user = authenticate(request, email=email, password=password)
+
+    if user is None:
+        return Response(
+            {"error": "Invalid email or password"},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    if not user.is_active:
+        return Response(
+            {"error": "Account is inactive"},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    refresh = RefreshToken.for_user(user)
+
+    return Response({
+        "user": UserSerializer(user).data,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+    }, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 def get_user_profile(request):
