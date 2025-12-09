@@ -15,6 +15,10 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         if(attrs['password']!= attrs['password_confirm']):
             raise serializers.ValidationError({'password': "Password did't match."})
         return attrs
+
+        if attrs['new_password'] != attrs['confirm_password']:
+            raise serializers.ValidationError("New password and confirm password do not match.")
+        return attrs
         
         
     def create(self, validated_data):
@@ -70,6 +74,35 @@ class ResendVerificationSerializer(serializers.Serializer):
             return value
         except User.DoesNotExist:
             raise serializers.ValidationError("No user found with this email address.")    
+
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password=serializers.CharField(required=True,write_only=True)
+    new_password=serializers.CharField(required=True,write_only=True)
+    confirm_password=serializers.CharField(required=True,write_only=True)
+
+    def validate(self,attrs):
+        if attrs['new_password'] != attrs['confirm_password']:
+            raise serializers.ValidationError("New password and confirm password do not match.")
+        
+        if(attrs['old_password']==attrs['new_password']):
+            raise serializers.ValidationError("New password can not be same.")
+        validate_password(attrs['new_password'])
+        return attrs
+
+
+    def validate_old_password(self,value):
+        user=self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError(" old password is incorrect.")
+        return value
+
+        
+
+
+
+
 
     
         

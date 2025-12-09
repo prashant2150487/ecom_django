@@ -1,6 +1,7 @@
+# from ecom_api.accounts.models import LoginHistory
 from django.shortcuts import render
 from rest_framework.response import Response
-from .models import User, EmailVerificationToken
+from .models import User, EmailVerificationToken , LoginHistory
 from .serializers import (
     UserRegisterSerializer,
     UserLoginSerializer,
@@ -8,14 +9,15 @@ from .serializers import (
     UserSerializer,
     UserProfileSerializer,
     ResendVerificationSerializer,
+    ChangePasswordSerializer,
 )
 from rest_framework.decorators import api_view
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.decorators import permission_classes, authentication_classes
 from .utils import send_verification_email, send_wellcome_email
 from django.contrib.auth import authenticate
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken 
 
 
 
@@ -135,7 +137,45 @@ def resend_verification_email(request):
                 "email":user.email
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)        
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)     
+
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    """
+    Change user password.
+    Requires current password and new password.
+    """
+    serializer=ChangePasswordSerializer(data=request.data)
+    if serializer.is_valid():
+        user=request.user
+        new_password=serializer.validated_data['new_password']
+        # change password
+        user.set_password(new_password)
+        user.save()
+        # Invalidate all sessions except current
+        user.sessions.exclude(session_key=request.session.sessions_key).update(is_active=False)
+        # kog the password cahnge
+        LoginHistory.objects.create(
+            user=user,
+            ip_address=request.META.get('REMOTE_ADDR'),
+            device_info=request.META.get('HTTP_USER_AGENT'),
+            status='sucess',
+            message="password change successfully"
+            
+        )
+        return Response({
+            'message': 'Passowrd changes sucessfully . You will loged out from all devices.'
+        }, status=status.HTTP_200_OK)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
        
 
     

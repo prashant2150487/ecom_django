@@ -14,7 +14,7 @@ from .models import User, UserProfile, Address, EmailVerificationToken, Password
 
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
-    can_delete = False
+    can_delete = True
 
 # ============================
 # ✅ ADDRESS INLINE
@@ -124,6 +124,8 @@ class EmailVerificationTokenAdmin(admin.ModelAdmin):
         'created_at'
     )
     list_filter = ('is_used',)
+    actions_on_top = True
+    actions_on_bottom = True
     
     
     
