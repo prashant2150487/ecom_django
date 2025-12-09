@@ -1,7 +1,7 @@
 # from ecom_api.accounts.models import LoginHistory
 from django.shortcuts import render
 from rest_framework.response import Response
-from .models import User, EmailVerificationToken , LoginHistory
+from .models import User, EmailVerificationToken , LoginHistory , UserSession
 from .serializers import (
     UserRegisterSerializer,
     UserLoginSerializer,
@@ -15,7 +15,7 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.decorators import permission_classes, authentication_classes
-from .utils import send_verification_email, send_wellcome_email
+from .utils import send_verification_email, send_wellcome_email, send_password_change_confirmation_email
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken 
 
@@ -147,31 +147,39 @@ def resend_verification_email(request):
 def change_password(request):
     """
     Change user password.
-    Requires current password and new password.
+    Requires old_password, new_password, and confirm_password.
+    Invalidates all other active sessions and sends confirmation email.
     """
-    serializer=ChangePasswordSerializer(data=request.data)
-    if serializer.is_valid():
+    serializer=ChangePasswordSerializer(data=request.data , context={'request':request})
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
         user=request.user
         new_password=serializer.validated_data['new_password']
         # change password
         user.set_password(new_password)
         user.save()
         # Invalidate all sessions except current
-        user.sessions.exclude(session_key=request.session.sessions_key).update(is_active=False)
-        # kog the password cahnge
+        user.user_sessions.exclude(session_key=request.session.session_key).update(is_active=False)
+        # log the password change
         LoginHistory.objects.create(
             user=user,
             ip_address=request.META.get('REMOTE_ADDR'),
             device_info=request.META.get('HTTP_USER_AGENT'),
-            status='sucess',
-            message="password change successfully"
+            status='success',
             
         )
+        # Send confirmation email
+        send_password_change_confirmation_email(user)
         return Response({
-            'message': 'Passowrd changes sucessfully . You will loged out from all devices.'
+             'message': 'Password changed successfully. You will be logged out from all other devices.',
         }, status=status.HTTP_200_OK)
-
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        print(f"Error changing password: {e}")
+        return Response({
+            'message': 'Failed to change password',
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 

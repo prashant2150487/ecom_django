@@ -84,3 +84,27 @@ def send_wellcome_email(user):
     except Exception as e:
         print(f"Error sending welcome email: {e}")
         return False
+    
+def send_password_change_confirmation_email(user):
+    """
+    Send email confirmation when password is changed.
+    """
+    try:
+        context = {
+            'user': user
+        }
+        html_message = render_to_string('emails/password_change_confirmation.html', context)
+        plain_message = strip_tags(html_message)
+        
+        send_mail(
+            subject='Password Changed Successfully',
+            message=plain_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            html_message=html_message,
+            fail_silently=False
+        )
+        return True
+    except Exception as e:
+        print(f"Error sending password change confirmation email: {e}")
+        return False
