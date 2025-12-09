@@ -10,14 +10,17 @@ from .serializers import (
     UserProfileSerializer,
     ResendVerificationSerializer,
     ChangePasswordSerializer,
+    ForgotPasswordSerializer,
 )
 from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.decorators import permission_classes, authentication_classes
-from .utils import send_verification_email, send_wellcome_email, send_password_change_confirmation_email
+from rest_framework.decorators import permission_classes, authentication_classes, throttle_classes
+from .utils import send_verification_email, send_wellcome_email, send_password_change_confirmation_email, send_password_reset_email
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken 
+from rest_framework.throttling import AnonRateThrottle , UserRateThrottle
+from django.core.cache import cache
 
 
 
@@ -183,6 +186,41 @@ def change_password(request):
 
 
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
+@throttle_classes([AnonRateThrottle])
+
+def forgot_password(request):
+    """
+    Request password reet email
+    """
+    serializer=ForgotPasswordSerializer(data=request.data)
+    if serializer.is_valid():
+        # create reset token 
+        reset_token=serializer.save()
+        # rate limit  
+        email= serializer.validated_data['email']
+        cache_key=f"forgot_password_{email}"
+        reset_attempts=cache.get(cache_key,0)
+
+        if reset_attempts >= 3:
+            return Response({
+                "message":"Too many attempts. Please try again after 5 minutes.",
+                "email":email
+            }, status=status.HTTP_429_TOO_MANY_REQUESTS)
+        # incriment attempts 
+        cache.set(cache_key,reset_attempts+1,timeout=300)
+
+        # Send password reset email
+        send_password_reset_email(User.objects.get(email=email), reset_token)
+
+        return Response({
+            'message': 'Password reset email sent. Please check your inbox'
+        })
+
+    return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)   
+
+    
 
        
 

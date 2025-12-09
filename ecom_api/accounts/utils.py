@@ -108,3 +108,34 @@ def send_password_change_confirmation_email(user):
     except Exception as e:
         print(f"Error sending password change confirmation email: {e}")
         return False
+    
+def send_password_reset_email(user, reset_token):
+    """
+    Send password reset email to user
+    """
+    try:
+        # Build reset URL
+        reset_link = f"{settings.FRONTEND_URL}/reset-password?token={reset_token.token}"
+        
+        context = {
+            'user': user,
+            'reset_link': reset_link,
+            'expiry_hours': 24,
+            'support_email': settings.DEFAULT_FROM_EMAIL
+        }
+        
+        html_message = render_to_string('emails/password_reset.html', context)
+        plain_message = strip_tags(html_message)
+        
+        send_mail(
+            subject='Reset Your Password',
+            message=plain_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            html_message=html_message,
+            fail_silently=False
+        )
+        return True
+    except Exception as e:
+        print(f"Error sending password reset email: {e}")
+        return False

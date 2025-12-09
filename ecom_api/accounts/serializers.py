@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User , UserProfile, Address, EmailVerificationToken
+from .models import User , UserProfile, Address, EmailVerificationToken, PasswordResetToken
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import authenticate
 
@@ -97,6 +97,24 @@ class ChangePasswordSerializer(serializers.Serializer):
         if not user.check_password(value):
             raise serializers.ValidationError("old password is incorrect.")
         return value
+
+
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    email=serializers.EmailField(required=True)
+    def validate_email(self,value):
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("No user found with this email address.")
+        return value
+
+    def save(self):
+        email=self.validated_data['email']
+        user=User.objects.get(email=email)
+        # Invalidate existing tokens
+        PasswordResetToken.objects.filter(user=user,is_used=False).update(is_used=True)
+        # Create new token
+        token=PasswordResetToken.objects.create(user=user)
+        return token
 
         
 

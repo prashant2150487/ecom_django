@@ -19,6 +19,7 @@ urlpatterns = [
     path('resend-verification-email/', views.resend_verification_email, name='resend_verification'),
 
     # Password Management
-    path('change-password/',views.change_password,name='change_password')
+    path('change-password/',views.change_password,name='change_password'),
+    path('forgot-password/',views.forgot_password,name='forgot_password'),
     
 ]
