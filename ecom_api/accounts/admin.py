@@ -163,41 +163,42 @@ class EmailVerificationTokenAdmin(admin.ModelAdmin):
 #     search_fields = ('user__email', 'token')
 
 
-# ============================
-# ✅ USER SESSION ADMIN
-# ============================
 
-# @admin.register(UserSession)
-# class UserSessionAdmin(admin.ModelAdmin):
-#     list_display = (
-#         'user',
-#         'ip_address',
-#         'city',
-#         'country',
-#         'login_at',
-#         'last_activity',
-#         'is_active'
-#     )
-
-#     list_filter = ('is_active', 'country')
-#     search_fields = ('user__email', 'ip_address')
 
 
 # ============================
 # ✅ LOGIN HISTORY ADMIN
 # ============================
 
-# @admin.register(LoginHistory)
-# class LoginHistoryAdmin(admin.ModelAdmin):
-#     list_display = (
-#         'user',
-#         'login_at',
-#         'ip_address',
-#         'city',
-#         'country',
-#         'status'
-#     )
 
-#     list_filter = ('status', 'country')
-#     search_fields = ('user__email', 'ip_address')
+@admin.register(LoginHistory)
+class LoginHistoryAdmin(admin.ModelAdmin):
+    list_display = (
+        'user',
+        'login_at',
+        'ip_address',
+        'city',
+        'country',
+        'status'
+    )
 
+    list_filter = ('status', 'country')
+    search_fields = ('user__email', 'ip_address')
+
+@admin.register(UserSession)
+class UserSessionAdmin(admin.ModelAdmin):
+    list_display = (
+        'user',
+        'ip_address',
+        'city',
+        'country',
+        'login_at',
+        'last_activity',
+        'is_active'
+    )
+
+    list_filter = ('is_active', 'country')
+    search_fields = ('user__email', 'ip_address')
+
+
+    
