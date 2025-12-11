@@ -90,35 +90,94 @@ def get_user_profile(request):
 @authentication_classes([])
 @permission_classes([AllowAny])
 def verify_email(request):
-    serializer=EmailVerificationSerializer(data=request.data)
-    if serializer.is_valid():
-        token=serializer.validated_data['token']
-        try:
-            token=EmailVerificationToken.objects.get(token=token)
-            print(token,"token")
-            user=token.user
-
-            # Mark token as used    
-            token.is_used=True
-            token.save()
-
-            # Mark user email as verified
-            
-            user.is_email_verified=True
-            user.save()
-             # Send welcome email
-            send_wellcome_email(user)
+    """
+    Verify user email using token sent via email.
+    Handles various error cases with proper error messages.
+    """
+    # Check if token is provided
+    if 'token' not in request.data:
+        return Response({
+            "error": "Token is required",
+            "code": "token_missing"
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    serializer = EmailVerificationSerializer(data=request.data)
+    
+    if not serializer.is_valid():
+        # Handle validation errors (e.g., invalid UUID format)
+        errors = serializer.errors
+        if 'token' in errors:
             return Response({
-                "message":"Email verified successfully",
-                "user":{
-                    "email":user.email,
-                    "first_name":user.first_name,
-                    "last_name":user.last_name,
-                    "is_email_verified":user.is_email_verified
-                }
-            }, status=status.HTTP_200_OK)
-        except EmailVerificationToken.DoesNotExist:
-            return Response({"error":"Invalid verification token"}, status=status.HTTP_400_BAD_REQUEST)    
+                "error": "Invalid token format. Please use the link from your verification email.",
+                "code": "invalid_token_format",
+                "details": errors['token']
+            }, status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+            "error": "Validation failed",
+            "code": "validation_error",
+            "details": errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    token_value = serializer.validated_data['token']
+    
+    try:
+        token = EmailVerificationToken.objects.get(token=token_value)
+        user = token.user
+        
+        # Check if token is already used
+        if token.is_used:
+            return Response({
+                "error": "This verification link has already been used.",
+                "code": "token_already_used"
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if token is expired
+        if not token.is_valid():
+            return Response({
+                "error": "This verification link has expired. Please request a new verification email.",
+                "code": "token_expired"
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if email is already verified
+        if user.is_email_verified:
+            return Response({
+                "error": "Your email is already verified.",
+                "code": "email_already_verified"
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Mark token as used    
+        token.is_used = True
+        token.save()
+
+        # Mark user email as verified
+        user.is_email_verified = True
+        user.save()
+        
+        # Send welcome email
+        send_wellcome_email(user)
+        
+        return Response({
+            "message": "Email verified successfully",
+            "code": "success",
+            "user": {
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "is_email_verified": user.is_email_verified
+            }
+        }, status=status.HTTP_200_OK)
+        
+    except EmailVerificationToken.DoesNotExist:
+        return Response({
+            "error": "Invalid verification token. The token may not exist or has been deleted.",
+            "code": "token_not_found"
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        print(f"Error verifying email: {e}")
+        return Response({
+            "error": "An unexpected error occurred while verifying your email. Please try again later.",
+            "code": "server_error"
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
