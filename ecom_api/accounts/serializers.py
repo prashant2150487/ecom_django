@@ -37,12 +37,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields='__all__'
 
 
-
-class UserSerializer(serializers.ModelSerializer):
-    profile=UserProfileSerializer(read_only=True)
-    class Meta:
-        model=User
-        fields=('id','email','first_name','last_name','phone_number','role','is_email_verified','is_phone_verified','profile','created_at','updated_at')         
+       
 
 
 
@@ -51,6 +46,13 @@ class AddressSerializer(serializers.ModelSerializer):
         model=Address
         fields='__all__'
         read_only_fields=('user','created_at','updated_at')   
+
+class UserSerializer(serializers.ModelSerializer):
+    profile=UserProfileSerializer(read_only=True)
+    addresses=AddressSerializer(read_only=True, many=True)
+    class Meta:
+        model=User
+        fields=('id','email','first_name','last_name','phone_number','role','is_email_verified','is_phone_verified','profile','addresses','created_at','updated_at')          
 
 class EmailVerificationSerializer(serializers.Serializer):
     token=serializers.UUIDField()
@@ -115,6 +117,11 @@ class ForgotPasswordSerializer(serializers.Serializer):
         # Create new token
         token=PasswordResetToken.objects.create(user=user)
         return token
+
+
+
+
+
 
         
 

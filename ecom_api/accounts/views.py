@@ -80,9 +80,14 @@ def login_user(request):
     }, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_user_profile(request):
     serializer=UserProfileSerializer(request.user)
-    return Response(serializer.data,status=status.HTTP_200_OK)
+    return Response({
+        'sucess': True,
+        'message': 'Profile retrieved successfully',
+        'data': serializer.data
+    }, status=status.HTTP_200_OK)
 
 
 
