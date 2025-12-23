@@ -8,10 +8,11 @@ from .serializers import (
     UserLoginSerializer,
     EmailVerificationSerializer,
     UserSerializer,
-    UserProfileSerializer,
     ResendVerificationSerializer,
     ChangePasswordSerializer,
     ForgotPasswordSerializer,
+    UserUpdateSerializer
+
 )
 from rest_framework.decorators import api_view
 from rest_framework import status
@@ -485,5 +486,27 @@ def logout_all(request):
 def update_user_profile(request):
     user=request.user
     # partial=True allows sending only some fields for updates
-    
+    serializer=UserUpdateSerializer(user,data=request.data,partial=True);
+    if serializer.is_valid():
+        serializer.save()
+        return Response(
+            {
+                "success": True, 
+                "message": "Profile updated successfully.",
+                "data": serializer.data
+            },
+            status=status.HTTP_200_OK
+        )
+    return Response(
+        {
+            "success": False,
+            "message": "Failed to update profile.",
+            "errors": serializer.errors
+        },
+        status=status.HTTP_400_BAD_REQUEST
+    )
+
+
+        
+
         
