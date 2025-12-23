@@ -76,6 +76,17 @@ class UserAdmin(BaseUserAdmin):
 # ============================
 # ✅ USER PROFILE ADMIN
 # ============================
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = (
+        'user',
+        'preferred_language',
+        'preferred_currency',
+        'timezone',
+        'newsletter_subscription',
+    )
+    list_filter = ('newsletter_subscription',)
+    search_fields = ('user__email',)
 
 # @admin.register(UserProfile)
 # class UserProfileAdmin(admin.ModelAdmin):

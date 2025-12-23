@@ -1,4 +1,5 @@
 # from ecom_api.accounts.models import LoginHistory
+from ipaddress import ip_address
 from django.shortcuts import render
 from rest_framework.response import Response
 from .models import User, EmailVerificationToken, LoginHistory, UserSession
@@ -81,15 +82,31 @@ def login_user(request):
 
     if user is None:
         return Response(
-            {"error": "Invalid email or password"}, status=status.HTTP_401_UNAUTHORIZED
+            {
+                "success": False,
+                "message": "Invalid email or password",
+            },
+            status=status.HTTP_401_UNAUTHORIZED,
         )
 
     if not user.is_active:
         return Response(
-            {"error": "Account is inactive"}, status=status.HTTP_403_FORBIDDEN
+            {
+                "success": False,
+                "message": "Account is inactive",
+            },
+            status=status.HTTP_403_FORBIDDEN,
         )
 
     refresh = RefreshToken.for_user(user)
+
+    UserSession.objects.create(
+        user=user,
+        session_key=refresh["jti"],
+        ip_address=request.META.get("REMOTE_ADDR"),
+        device_info=request.META.get("HTTP_USER_AGENT", ""),
+        is_active=True,
+    )
 
     return Response(
         {
@@ -97,7 +114,6 @@ def login_user(request):
             "message": "User logged in successfully",
             "code": "success",
             "data": {
-                "user": UserSerializer(user).data,
                 "refresh": str(refresh),
                 "access": str(refresh.access_token),
             },
@@ -109,15 +125,25 @@ def login_user(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_user_profile(request):
-    serializer = UserProfileSerializer(request.user)
-    return Response(
-        {
-            "sucess": True,
-            "message": "Profile retrieved successfully",
-            "data": serializer.data,
-        },
-        status=status.HTTP_200_OK,
-    )
+    try:
+        serializer = UserSerializer(request.user)
+        return Response(
+            {
+                "sucess": True,
+                "message": "Profile retrieved successfully",
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+    except Exception as e:
+        return Response(
+            {
+                "success": False,
+                "message": "Failed to retrieve profile",
+                "error": str(e),
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
 @api_view(["POST"])
@@ -434,3 +460,30 @@ def forgot_password(request):
         )
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["post"])
+@permission_classes([IsAuthenticated])
+def logout_all(request):
+    """
+    Logout all devices
+    """
+    active_sessions = request.user.user_sessions.filter(is_active=True)
+    print(active_sessions.exists())
+    if not active_sessions.exists():
+        return Response({"success": False, "message": "No active sessions found."})
+
+    active_sessions.update(is_active=False)
+    return Response(
+        {"success": True, "message": "Logged out from all other devices successfully."}
+    )
+
+
+
+@api_view(["PUT"])
+@permission_classes([IsAuthenticated])
+def update_user_profile(request):
+    user=request.user
+    # partial=True allows sending only some fields for updates
+    
+        

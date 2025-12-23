@@ -1,0 +1,163 @@
+# name: Django CI/CD - Live Branch
+
+# on:
+#   push:
+#     branches:
+#       - live
+#       - main
+#   pull_request:
+#     branches:
+#       - live
+#       - main
+
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
+    
+#     services:
+#       mysql:
+#         image: mysql:8.0
+#         env:
+#           MYSQL_ROOT_PASSWORD: root
+#           MYSQL_DATABASE: ecom_prod
+#         options: >-
+#           --health-cmd="mysqladmin ping"
+#           --health-interval=10s
+#           --health-timeout=5s
+#           --health-retries=3
+#         ports:
+#           - 3306:3306
+
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v4
+
+#       - name: Setup Python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: "3.11"
+
+#       - name: Cache pip dependencies
+#         uses: actions/cache@v3
+#         with:
+#           path: ~/.cache/pip
+#           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+#           restore-keys: |
+#             ${{ runner.os }}-pip-
+
+#       - name: Install Dependencies
+#         run: |
+#           python -m pip install --upgrade pip
+#           pip install -r requirements.txt
+
+#       - name: Run Security Checks
+#         run: |
+#           pip install bandit safety
+#           bandit -r . -ll --exclude ./venv,./migrations || true
+#           safety check --json || true
+
+#       - name: Run Linting (Flake8)
+#         run: |
+#           pip install flake8
+#           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+#           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+#       - name: Run Tests
+#         run: |
+#           python manage.py test --no-migrations
+
+#       - name: Check Database Migrations
+#         run: |
+#           python manage.py makemigrations --check --dry-run
+
+#       - name: Code Quality Report
+#         if: always()
+#         run: |
+#           pip install pylint
+#           pylint --load-plugins pylint_django $(find . -name '*.py' -path '*/ecom_api/*' ! -path '*migrations*' ! -path '*__pycache__*') --exit-zero || true
+
+#   build:
+#     needs: test
+#     runs-on: ubuntu-latest
+    
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v4
+
+#       - name: Setup Python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: "3.11"
+
+#       - name: Install Dependencies
+#         run: |
+#           python -m pip install --upgrade pip
+#           pip install -r requirements.txt
+
+#       - name: Collect Static Files
+#         run: |
+#           python manage.py collectstatic --noinput
+
+#       - name: Create Build Artifact
+#         run: |
+#           mkdir -p build-artifacts
+#           tar -czf build-artifacts/django-build.tar.gz \
+#             --exclude='.git' \
+#             --exclude='.env' \
+#             --exclude='db.sqlite3' \
+#             --exclude='__pycache__' \
+#             --exclude='*.pyc' \
+#             --exclude='venv' \
+#             --exclude='.venv' \
+#             .
+
+#       - name: Upload Build Artifact
+#         uses: actions/upload-artifact@v3
+#         with:
+#           name: django-live-build
+#           path: build-artifacts/django-build.tar.gz
+#           retention-days: 30
+
+#       - name: Production Build Notification
+#         run: |
+#           echo "✓ Production build successful"
+#           echo "Build time: $(date)"
+#           echo "Branch: live"
+#           echo "Commit: ${{ github.sha }}"
+#           echo "Ready for deployment"
+
+#   deploy:
+#     needs: build
+#     runs-on: ubuntu-latest
+#     if: github.ref == 'refs/heads/live' && github.event_name == 'push'
+    
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v4
+
+#       - name: Download Build Artifact
+#         uses: actions/download-artifact@v3
+#         with:
+#           name: django-live-build
+
+#       - name: Prepare Deployment
+#         run: |
+#           echo "Deployment preparation started"
+#           echo "Artifact ready for deployment"
+
+#       - name: Deploy to Production
+#         run: |
+#           echo "⚠️  Manual deployment required"
+#           echo "Please pull the latest changes from 'live' branch on your production server"
+#           echo "Run the following commands on your production environment:"
+#           echo "  1. git pull origin live"
+#           echo "  2. pip install -r requirements.txt"
+#           echo "  3. python manage.py migrate"
+#           echo "  4. python manage.py collectstatic --noinput"
+#           echo "  5. Restart your Django application server"
+
+#       - name: Notify Deployment
+#         if: success()
+#         run: |
+#           echo "✓ Deployment notification: Code ready on live branch"
+#           echo "Timestamp: $(date)"

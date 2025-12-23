@@ -1,5 +1,6 @@
 from django.contrib import admin
-
+from django.urls import reverse
+from django.utils.html import format_html
 # Register your models here.
 from .models import Category, Product, ProductImage, ProductVariant, ProductAttribute
 
@@ -14,6 +15,15 @@ class CategoryAdmin(admin.ModelAdmin):
     def category_product_count(self, obj):
         return obj.get_products_count()
     category_product_count.short_description = 'Total Products'
+    # New function to show Delete button
+    def delete_category_button(self, obj):
+        delete_url = reverse('admin:products_category_delete', args=[obj.pk])
+        return format_html('<a class="button" href="{}" style="background-color: #ba2121; color: white; padding: 3px 10px; border-radius: 3px; text-decoration: none;">Delete</a>', delete_url)
+    
+    delete_category_button.short_description = 'Actions'
+    delete_category_button.allow_tags = True
+  
+    
 
 # ================================
 # ✅ PRODUCT IMAGES INLINE

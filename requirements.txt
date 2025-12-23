@@ -10,17 +10,6 @@ celery
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 # python manage.py createsuperuser
 # Username :
 # Email address: admin@example.com

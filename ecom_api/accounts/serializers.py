@@ -118,8 +118,15 @@ class ForgotPasswordSerializer(serializers.Serializer):
         token=PasswordResetToken.objects.create(user=user)
         return token
 
+class UserUpdateSerializer(serializers.ModelSerializer):
+   profile= UserProfileSerializer(required=False)
+   class Meta:
+        model=User
+        fields=('first_name','last_name','phone_number','profile','date_of_birth','gender') 
 
-
+    def update(self,instance,validate_data):
+        # Extract profile data data if present
+        prof
 
 
 
