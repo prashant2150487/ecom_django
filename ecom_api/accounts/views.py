@@ -11,8 +11,7 @@ from .serializers import (
     ResendVerificationSerializer,
     ChangePasswordSerializer,
     ForgotPasswordSerializer,
-    UserUpdateSerializer
-
+    UserUpdateSerializer,
 )
 from rest_framework.decorators import api_view
 from rest_framework import status
@@ -123,27 +122,49 @@ def login_user(request):
     )
 
 
-@api_view(["GET"])
+@api_view(["GET", "PATCH", "PUT"])
 @permission_classes([IsAuthenticated])
 def get_user_profile(request):
-    try:
-        serializer = UserSerializer(request.user)
-        return Response(
-            {
-                "sucess": True,
-                "message": "Profile retrieved successfully",
-                "data": serializer.data,
-            },
-            status=status.HTTP_200_OK,
-        )
-    except Exception as e:
+    if request.method == "GET":
+        try:
+            serializer = UserSerializer(request.user)
+            return Response(
+                {
+                    "sucess": True,
+                    "message": "Profile retrieved successfully",
+                    "data": serializer.data,
+                },
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "message": "Failed to retrieve profile",
+                    "error": str(e),
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    elif request.method in ["PATCH", "PUT"]:
+        serializer = UserUpdateSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {
+                    "success": True,
+                    "message": "Profile updated successfully.",
+                    "data": serializer.data,
+                },
+                status=status.HTTP_200_OK,
+            )
         return Response(
             {
                 "success": False,
-                "message": "Failed to retrieve profile",
-                "error": str(e),
+                "message": "Failed to update profile.",
+                "errors": serializer.errors,
             },
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
 
@@ -480,33 +501,27 @@ def logout_all(request):
     )
 
 
-
 @api_view(["PUT"])
 @permission_classes([IsAuthenticated])
 def update_user_profile(request):
-    user=request.user
+    user = request.user
     # partial=True allows sending only some fields for updates
-    serializer=UserUpdateSerializer(user,data=request.data,partial=True);
+    serializer = UserUpdateSerializer(user, data=request.data, partial=True)
     if serializer.is_valid():
         serializer.save()
         return Response(
             {
-                "success": True, 
+                "success": True,
                 "message": "Profile updated successfully.",
-                "data": serializer.data
+                "data": serializer.data,
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
     return Response(
         {
             "success": False,
             "message": "Failed to update profile.",
-            "errors": serializer.errors
+            "errors": serializer.errors,
         },
-        status=status.HTTP_400_BAD_REQUEST
+        status=status.HTTP_400_BAD_REQUEST,
     )
-
-
-        
-
-        

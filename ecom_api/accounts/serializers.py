@@ -138,6 +138,15 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             profile.save() 
         return instance
 
+class ProfileAvatarSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=User
+        fields=('profile_image')
+
+    def validate_profile_image(self, value):
+        if(value.size> 5*1024*1024):
+            raise serializers.ValidationError("Profile image size should be less than 5MB.")
+        return value
 
         
 
