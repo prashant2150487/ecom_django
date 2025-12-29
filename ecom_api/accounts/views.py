@@ -1,4 +1,7 @@
 # from ecom_api.accounts.models import LoginHistory
+import os
+import uuid
+from django.contrib.messages.api import success
 from ipaddress import ip_address
 from django.shortcuts import render
 from rest_framework.response import Response
@@ -14,12 +17,13 @@ from .serializers import (
     UserUpdateSerializer,
 )
 from rest_framework.decorators import api_view
-from rest_framework import status
+from rest_framework import status, parsers
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.decorators import (
     permission_classes,
     authentication_classes,
     throttle_classes,
+    parser_classes,
 )
 from .utils import (
     send_verification_email,
@@ -31,6 +35,8 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from django.core.cache import cache
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 
 
 # Create your views here.
@@ -525,3 +531,99 @@ def update_user_profile(request):
         },
         status=status.HTTP_400_BAD_REQUEST,
     )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+@parser_classes([parsers.MultiPartParser])
+def upload_profile_avatar(request):
+    """
+    Upload profile avatar to S3 bucket
+    POST /api/auth/profile/avatar/
+    """
+    try:
+        user = request.user
+
+        # Check if file is provided
+        if "avatar" not in request.FILES:
+            return Response(
+                {
+                    "success": False,
+                    "message": "No file provided",
+                    "code": "no_file_provided",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        avatar_file = request.FILES["avatar"]
+
+        # Validate file type
+        allowed_types = [
+            "image/jpeg",
+            "image/png",
+            "image/jpg",
+            "image/gif",
+            "image/webp",
+        ]
+        if avatar_file.content_type not in allowed_types:
+            return Response(
+                {
+                    "success": False,
+                    "message": "Invalid file type. Only JPEG, PNG, GIF, and WEBP are allowed.",
+                    "code": "invalid_file_type",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validate file size (max 5MB)
+        max_size = 5 * 1024 * 1024
+        if avatar_file.size > max_size:
+            return Response(
+                {
+                    "success": False,
+                    "message": "File size too large. Maximum size is 5MB.",
+                    "code": "file_too_large",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Generate unique filename
+        file_extension = os.path.splitext(avatar_file.name)[1]
+        filename = f"avatars/user_{user.id}/{uuid.uuid4()}{file_extension}"
+
+        # Delete old avatar if exists
+        if user.profile_image:
+            try:
+                default_storage.delete(user.profile_image.name)
+            except Exception as e:
+                print(f"Error deleting old avatar: {e}")
+
+        # Save to S3 using Django's storage backend
+        saved_path = default_storage.save(filename, ContentFile(avatar_file.read()))
+        avatar_url = default_storage.url(saved_path)
+
+        # Update user profile
+        user.profile_image = saved_path
+        user.save()
+
+        return Response(
+            {
+                "success": True,
+                "message": "Profile avatar uploaded successfully",
+                "data": {
+                    "avatar_url": avatar_url,
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    except Exception as e:
+        print(f"Error uploading avatar: {e}")
+        return Response(
+            {
+                "success": False,
+                "message": "Failed to upload avatar",
+                "code": "upload_failed",
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )

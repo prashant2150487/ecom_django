@@ -25,7 +25,11 @@ urlpatterns = [
 
 
     # profile management
-    path('profile/update/', views.update_user_profile, name='update_profile')
+    path('profile/update/', views.update_user_profile, name='update_profile'),
+
+    # Avatar Management (NEW)
+    path("profile/avatar/", views.upload_profile_avatar, name="upload_avatar"),
+    # path("profile/avatar/", views.delete_profile_avatar",, name="delete_avatar")
     
 
 

@@ -1,20 +1,28 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
-
-
-
-from .models import User, UserProfile, Address, EmailVerificationToken, PasswordResetToken, UserSession, LoginHistory
-
+from .models import (
+    User,
+    UserProfile,
+    Address,
+    EmailVerificationToken,
+    PasswordResetToken,
+    UserSession,
+    LoginHistory,
+)
 
 
 # ============================
 # ✅ USER PROFILE INLINE
 # ============================
 
+
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
     can_delete = True
+
 
 # ============================
 # ✅ ADDRESS INLINE
@@ -22,7 +30,8 @@ class UserProfileInline(admin.StackedInline):
 class AddressInline(admin.TabularInline):
     model = Address
     extra = 0
-    
+
+
 # ============================
 # ✅ CUSTOM USER ADMIN
 # ============================
@@ -30,48 +39,119 @@ class AddressInline(admin.TabularInline):
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    ordering = ('-created_at',)
+    ordering = ("-created_at",)
     list_display = (
-        'email',
-        'full_name',
-        'role',
-        'is_staff',
-        'is_active',
-        'is_email_verified',
-        'created_at'
+        "email",
+        "profile_image_preview",
+        "full_name",
+        "role",
+        "is_staff",
+        "is_active",
+        "is_email_verified",
+        "created_at",
     )
 
     list_filter = (
-        'role',
-        'is_staff',
-        'is_active',
-        'is_email_verified',
+        "role",
+        "is_staff",
+        "is_active",
+        "is_email_verified",
     )
 
-    search_fields = ('email', 'first_name', 'last_name')
+    search_fields = ("email", "first_name", "last_name")
 
     fieldsets = (
-        ('Authentication', {'fields': ('email', 'password')}),
-        ('Personal Info', {'fields': ('first_name', 'last_name', 'phone_number', 'date_of_birth', 'gender')}),
-        ('Profile Images', {'fields': ('profile_image', 'cover_image', 'bio')}),
-        ('Permissions', {'fields': ('role', 'is_staff', 'is_superuser', 'is_active')}),
-        ('Verification', {'fields': ('is_email_verified', 'is_phone_verified')}),
-        ('Important Dates', {'fields': ('last_login', 'created_at')}),
+        ("Authentication", {"fields": ("email", "password")}),
+        (
+            "Personal Info",
+            {
+                "fields": (
+                    "first_name",
+                    "last_name",
+                    "phone_number",
+                    "date_of_birth",
+                    "gender",
+                )
+            },
+        ),
+        (
+            "Profile Images",
+            {
+                "fields": (
+                    "profile_image_display",
+                    "profile_image",
+                    "cover_image_display",
+                    "cover_image",
+                    "bio",
+                ),
+                "description": "Upload and manage user profile images",
+            },
+        ),
+        ("Permissions", {"fields": ("role", "is_staff", "is_superuser", "is_active")}),
+        ("Verification", {"fields": ("is_email_verified", "is_phone_verified")}),
+        ("Important Dates", {"fields": ("last_login", "created_at")}),
     )
 
     add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': ('email', 'password1', 'password2'),
-        }),
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": ("email", "password1", "password2"),
+            },
+        ),
     )
 
-    readonly_fields = ('created_at', 'last_login')
+    readonly_fields = (
+        "created_at",
+        "last_login",
+        "profile_image_display",
+        "cover_image_display",
+    )
 
     inlines = [UserProfileInline, AddressInline]
 
-    USERNAME_FIELD = 'email'
- 
+    USERNAME_FIELD = "email"
+
+    def profile_image_preview(self, obj):
+        """Display profile image thumbnail in list view"""
+        if obj.profile_image:
+            return format_html(
+                '<img src="{}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;" />',
+                obj.profile_image.url,
+            )
+        return format_html('<span style="color: #999;">No Image</span>')
+
+    profile_image_preview.short_description = "Avatar"
+
+    def profile_image_display(self, obj):
+        """Display full profile image preview in detail view"""
+        if obj.profile_image:
+            return format_html(
+                '<div style="margin: 10px 0;">'
+                '<img src="{}" style="max-width: 200px; max-height: 200px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />'
+                '<p style="margin-top: 5px; color: #666; font-size: 12px;">Current Profile Image</p>'
+                "</div>",
+                obj.profile_image.url,
+            )
+        return format_html('<p style="color: #999;">No profile image uploaded</p>')
+
+    profile_image_display.short_description = "Current Profile Image"
+
+    def cover_image_display(self, obj):
+        """Display full cover image preview in detail view"""
+        if obj.cover_image:
+            return format_html(
+                '<div style="margin: 10px 0;">'
+                '<img src="{}" style="max-width: 400px; max-height: 200px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />'
+                '<p style="margin-top: 5px; color: #666; font-size: 12px;">Current Cover Image</p>'
+                "</div>",
+                obj.cover_image.url,
+            )
+        return format_html('<p style="color: #999;">No cover image uploaded</p>')
+
+    cover_image_display.short_description = "Current Cover Image"
+
 
 # ============================
 # ✅ USER PROFILE ADMIN
@@ -79,14 +159,15 @@ class UserAdmin(BaseUserAdmin):
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = (
-        'user',
-        'preferred_language',
-        'preferred_currency',
-        'timezone',
-        'newsletter_subscription',
+        "user",
+        "preferred_language",
+        "preferred_currency",
+        "timezone",
+        "newsletter_subscription",
     )
-    list_filter = ('newsletter_subscription',)
-    search_fields = ('user__email',)
+    list_filter = ("newsletter_subscription",)
+    search_fields = ("user__email",)
+
 
 # @admin.register(UserProfile)
 # class UserProfileAdmin(admin.ModelAdmin):
@@ -127,20 +208,11 @@ class UserProfileAdmin(admin.ModelAdmin):
 # ============================
 @admin.register(EmailVerificationToken)
 class EmailVerificationTokenAdmin(admin.ModelAdmin):
-    list_display =(
-        'user',
-        'token',
-        'is_used',
-        'expires_at',
-        'created_at'
-    )
-    list_filter = ('is_used',)
+    list_display = ("user", "token", "is_used", "expires_at", "created_at")
+    list_filter = ("is_used",)
     actions_on_top = True
     actions_on_bottom = True
-    
-    
-    
-    
+
 
 # @admin.register(EmailVerificationToken)
 # class EmailVerificationTokenAdmin(admin.ModelAdmin):
@@ -174,9 +246,6 @@ class EmailVerificationTokenAdmin(admin.ModelAdmin):
 #     search_fields = ('user__email', 'token')
 
 
-
-
-
 # ============================
 # ✅ LOGIN HISTORY ADMIN
 # ============================
@@ -184,32 +253,23 @@ class EmailVerificationTokenAdmin(admin.ModelAdmin):
 
 @admin.register(LoginHistory)
 class LoginHistoryAdmin(admin.ModelAdmin):
-    list_display = (
-        'user',
-        'login_at',
-        'ip_address',
-        'city',
-        'country',
-        'status'
-    )
+    list_display = ("user", "login_at", "ip_address", "city", "country", "status")
 
-    list_filter = ('status', 'country')
-    search_fields = ('user__email', 'ip_address')
+    list_filter = ("status", "country")
+    search_fields = ("user__email", "ip_address")
+
 
 @admin.register(UserSession)
 class UserSessionAdmin(admin.ModelAdmin):
     list_display = (
-        'user',
-        'ip_address',
-        'city',
-        'country',
-        'login_at',
-        'last_activity',
-        'is_active'
+        "user",
+        "ip_address",
+        "city",
+        "country",
+        "login_at",
+        "last_activity",
+        "is_active",
     )
 
-    list_filter = ('is_active', 'country')
-    search_fields = ('user__email', 'ip_address')
-
-
-    
+    list_filter = ("is_active", "country")
+    search_fields = ("user__email", "ip_address")

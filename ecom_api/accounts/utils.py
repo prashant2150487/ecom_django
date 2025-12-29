@@ -5,6 +5,10 @@ from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
 from .models import EmailVerificationToken
+from botocore.exceptions import ClientError
+import uuid
+import os   
+import boto3
 def get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
@@ -139,3 +143,113 @@ def send_password_reset_email(user, reset_token):
     except Exception as e:
         print(f"Error sending password reset email: {e}")
         return False
+
+
+
+def get_s3_client():
+    """Get S3 client instance"""
+    return boto3.client(
+        's3',
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        region_name=settings.AWS_S3_REGION_NAME
+    )
+
+def upload_to_s3(file_content, folder, filename=None, content_type=None):
+    """
+    Upload file to S3 bucket
+    
+    Args:
+        file_content: File content (bytes)
+        folder: Folder path in S3 (e.g., 'avatars/user_1/')
+        filename: Optional filename (will generate UUID if not provided)
+        content_type: Optional content type
+    
+    Returns:
+        tuple: (s3_key, s3_url)
+    """
+    s3_client = get_s3_client()
+    
+    if not filename:
+        filename = f"{uuid.uuid4()}"
+    
+    # Ensure folder ends with /
+    if not folder.endswith('/'):
+        folder = f"{folder}/"
+    
+    s3_key = f"{folder}{filename}"
+    
+    extra_args = {}
+    if content_type:
+        extra_args['ContentType'] = content_type
+    
+    s3_client.put_object(
+        Bucket=settings.AWS_STORAGE_BUCKET_NAME,
+        Key=s3_key,
+        Body=file_content,
+        **extra_args
+    )
+    
+    # Generate URL
+    s3_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.{settings.AWS_S3_REGION_NAME}.amazonaws.com/{s3_key}"
+    
+    return s3_key, s3_url
+
+def delete_from_s3(s3_key):
+    """
+    Delete file from S3 bucket
+    
+    Args:
+        s3_key: S3 key to delete
+    
+    Returns:
+        bool: True if deleted, False if not found
+    """
+    s3_client = get_s3_client()
+    
+    try:
+        s3_client.delete_object(
+            Bucket=settings.AWS_STORAGE_BUCKET_NAME,
+            Key=s3_key
+        )
+        return True
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'NoSuchKey':
+            return False  # File already doesn't exist
+        raise
+
+def get_presigned_url(s3_key, expiration=3600):
+    """
+    Generate a presigned URL for S3 object
+    
+    Args:
+        s3_key: S3 object key
+        expiration: URL expiration time in seconds (default 1 hour)
+    
+    Returns:
+        str: Presigned URL
+    """
+    s3_client = get_s3_client()
+    
+    try:
+        response = s3_client.generate_presigned_url(
+            'get_object',
+            Params={
+                'Bucket': settings.AWS_STORAGE_BUCKET_NAME,
+                'Key': s3_key
+            },
+            ExpiresIn=expiration
+        )
+        return response
+    except ClientError as e:
+        print(f"Error generating presigned URL: {e}")
+        return None
+
+def generate_avatar_key(user_id, file_extension):
+    """Generate S3 key for user avatar"""
+    return f"avatars/user_{user_id}/{uuid.uuid4()}{file_extension}"
+
+def generate_cover_key(user_id, file_extension):
+    """Generate S3 key for user cover image"""
+    return f"covers/user_{user_id}/{uuid.uuid4()}{file_extension}"
+

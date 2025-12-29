@@ -148,6 +148,29 @@ class ProfileAvatarSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Profile image size should be less than 5MB.")
         return value
 
+
+
+class AvatarUploadSerializer(serializers.ModelSerializer):
+    avatar=serializers.ImageField(
+        required=True,
+        max_length=100,
+        allow_empty_file=False,
+        help_text="Profile avatar image (max 5MB)"
+
+    )
+    def validate_avatar(self,value):
+         # Validate file extension
+        valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+        ext = os.path.splitext(value.name)[1].lower()
+        if ext not in valid_extensions:
+            raise serializers.ValidationError("Invalid file extension. Only JPG, JPEG, PNG, GIF, and WEBP are allowed.")
+        if value.size > 5*1024*1024:
+            raise serializers.ValidationError("Profile image size should be less than 5MB.")
+        return value
+        
+    
+
+
         
 
 
