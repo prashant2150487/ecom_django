@@ -533,16 +533,48 @@ def update_user_profile(request):
     )
 
 
-@api_view(["POST"])
+@api_view(["POST", "DELETE"])
 @permission_classes([IsAuthenticated])
 @parser_classes([parsers.MultiPartParser])
-def upload_profile_avatar(request):
+def manage_profile_avatar(request):
     """
-    Upload profile avatar to S3 bucket
+    Manage profile avatar: Upload (POST) or Delete (DELETE)
     POST /api/auth/profile/avatar/
+    DELETE /api/auth/profile/avatar/
     """
     try:
         user = request.user
+
+        if request.method == "DELETE":
+            if not user.profile_image:
+                return Response(
+                    {
+                        "success": False,
+                        "message": "No avatar found for this user",
+                    },
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            try:
+                if user.profile_image:
+                    default_storage.delete(user.profile_image.name)
+                user.profile_image = None
+                user.save()
+                return Response(
+                    {
+                        "success": True,
+                        "message": "Profile image deleted successfully",
+                    },
+                    status=status.HTTP_200_OK,
+                )
+            except Exception as e:
+                print(f"Error deleting avatar: {e}")
+                return Response(
+                    {
+                        "success": False,
+                        "message": "Failed to delete avatar",
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
 
         # Check if file is provided
         if "avatar" not in request.FILES:
