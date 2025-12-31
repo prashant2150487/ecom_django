@@ -27,4 +27,5 @@ urlpatterns = [
     path("profile/update/", views.update_user_profile, name="update_profile"),
     # Avatar Management (NEW)
     path("profile/avatar/", views.manage_profile_avatar, name="profile_avatar"),
+    path("profile/cover",views.manage_profile_cover,name="profile_cover")
 ]

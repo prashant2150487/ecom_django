@@ -659,3 +659,115 @@ def manage_profile_avatar(request):
             },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+@api_view(["POST", "DELETE"])
+@permission_classes([IsAuthenticated])
+def manage_profile_cover(request):
+    """
+    Manage profile cover image: Upload (POST) or Delete (DELETE)
+    POST /api/auth/profile/cover/
+    DELETE /api/auth/profile/cover/
+    """
+    try:
+        user = request.user
+        if request.method == "DELETE":
+            if not user.cover_image:
+                return Response(
+                    {
+                        "success": False,
+                        "message": "No cover image found for this user",
+                    },
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            try:
+                if user.cover_image:
+                    default_storage.delete(user.cover_image.name)
+                user.cover_image = None
+                user.save()
+                return Response(
+                    {
+                        "sucess": True,
+                        "message": "Cover image deleted successfully",
+                    },
+                    status=status.HTTP_200_OK,
+                )
+            except Exception as e:
+                print(f"Error deleting cover image: {e}")
+                return Response(
+                    {
+                        "success": False,
+                        "message": "Failed to delete cover image",
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+        # Handle POST (Upload)
+        # Check if file is provided
+        if "cover" not in request.FILES:
+            return Response(
+                {
+                    "success": False,
+                    "message": "No file provided",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        cover_file = request.FILES["cover"]
+        # Validate file type
+        allowed_types = [
+            "image/jpeg",
+            "image/png",
+            "image/jpg",
+            "image/gif",
+            "image/webp",
+        ]
+
+        if cover_file.content_type not in allowed_types:
+            return Response(
+                {
+                    "success": False,
+                    "message": "Invalid file type. Only JPEG, PNG, GIF, and WEBP are allowed.",
+                    "code": "invalid_file_type",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if cover_file.size > 5 * 1024 * 1024:
+            return Response(
+                {
+                    "success": False,
+                    "message": "File size too large. Maximum size is 5MB.",
+                    "code": "file_too_large",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        file_extension = os.path.splitext(cover_file.name)[1]
+        filename = f"covers/user_{user.id}/{uuid.uuid4()}{file_extension}"
+        if user.cover_image:
+            try:
+                default_storage.delete(user.cover_image.name)
+            except Exception as e:
+                print(f"Error deleting old cover image: {e}")
+        saved_path = default_storage.save(filename, ContentFile(cover_file.read()))
+        cover_url = default_storage.url(saved_path)
+        user.cover_image = saved_path
+        user.save()
+        return Response(
+            {
+                "success": True,
+                "message": "Cover image uploaded successfully",
+                "data": {
+                    "cover_url": cover_url,
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    except Exception as e:
+        print(f"Error uploading cover image: {e}")
+        return Response(
+            {
+                "success": False,
+                "message": "Failed to upload cover image",
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
