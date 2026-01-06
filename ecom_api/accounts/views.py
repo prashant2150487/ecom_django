@@ -15,6 +15,7 @@ from .serializers import (
     ChangePasswordSerializer,
     ForgotPasswordSerializer,
     UserUpdateSerializer,
+    AddressSerializer,
 )
 from rest_framework.decorators import api_view
 from rest_framework import status, parsers
@@ -37,7 +38,8 @@ from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
-
+from django.shortcuts import get_object_or_404
+from accounts.models import Address
 
 # Create your views here.
 
@@ -770,4 +772,93 @@ def manage_profile_cover(request):
                 "message": "Failed to upload cover image",
             },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def address_list(request):
+    """
+    List all addresses or create a new one.
+    GET /api/auth/addresses/
+    POST /api/auth/addresses/
+    """
+    if request.method == "GET":
+        addresses = request.user.addresses.all()
+        serializer = AddressSerializer(addresses, many=True)
+        return Response(
+            {
+                "success": True,
+                "message": "Addresses retrieved successfully",
+                "data": serializer.data,
+            }
+        )
+    elif request.method == "POST":
+        serializer = AddressSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(
+                {
+                    "success": True,
+                    "message": "Address created successfully",
+                    "data": serializer.data,
+                }
+            )
+        return Response(
+            {
+                "success": False,
+                "message": "Failed to create address",
+                "code": "address_creation_failed",
+            }
+        )
+
+
+@api_view(["GET", "PUT", "DELETE"])
+@permission_classes([IsAuthenticated])
+def address_detail(request, pk):
+    """
+    Retrieve, update or delete a specific address.
+    GET /api/auth/addresses/<id>/
+    PUT /api/auth/addresses/<id>/
+    DELETE /api/auth/addresses/<id>/
+    """
+    address = get_object_or_404(Address, pk=pk, user=request.user)
+    print(address)
+
+    if request.method == "GET":
+        serializer = AddressSerializer(address)
+        return Response(
+            {
+                "success": True,
+                "message": "Address retrieved successfully",
+                "data": serializer.data,
+            }
+        )
+    elif request.method == "PUT":
+        serializer = AddressSerializer(address, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {
+                    "success": True,
+                    "message": "Address updated successfully",
+                    "data": serializer.data,
+                }
+            )
+        return Response(
+            {
+                "success": False,
+                "message": "Failed to update address",
+                "code": "address_update_failed",
+                "errors": serializer.errors,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    elif request.method == "DELETE":
+        address.delete()
+        return Response(
+            {
+                "success": True,
+                "message": "Address deleted successfully",
+            }
         )

@@ -30,5 +30,6 @@ urlpatterns = [
     path("profile/avatar/", views.manage_profile_avatar, name="profile_avatar"),
     path("profile/cover", views.manage_profile_cover, name="profile_cover"),
     # Address management
-    # path("addresses/", views.address_list, name="address_list"),
+    path("addresses/", views.address_list, name="address_list"),
+    path("addresses/<int:pk>", views.address_detail, name="address_detail"),
 ]
