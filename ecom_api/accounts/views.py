@@ -138,7 +138,7 @@ def get_user_profile(request):
             serializer = UserSerializer(request.user)
             return Response(
                 {
-                    "sucess": True,
+                    "success": True,
                     "message": "Profile retrieved successfully",
                     "data": serializer.data,
                 },
@@ -689,7 +689,7 @@ def manage_profile_cover(request):
                 user.save()
                 return Response(
                     {
-                        "sucess": True,
+                        "success": True,
                         "message": "Cover image deleted successfully",
                     },
                     status=status.HTTP_200_OK,
